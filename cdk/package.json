@@ -1,0 +1,28 @@
+{
+  "name": "cdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "cdk": "cdk",
+    "build": "tsc",
+    "synth": "cdk synth",
+    "deploy:dev": "cdk deploy PiggiesPagesDev",
+    "deploy:prod": "cdk deploy PiggiesPagesProd",
+    "deploy:all": "cdk deploy --all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "aws-cdk-lib": "^2.238.0",
+    "constructs": "^10.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "aws-cdk": "^2.1105.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
