@@ -90,8 +90,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Checkbox + Buttons */}
-        <div className="border-t border-pink-200 px-6 py-4 bg-pink-50/50 rounded-b-lg relative">
+        {/* Buttons */}
+        <div className="border-t border-pink-200 px-6 py-4 bg-pink-50/50 rounded-b-lg">
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:justify-end">
             <button
               onClick={() => setAgreed(true)}
@@ -100,27 +100,31 @@ export default function Home() {
               I Agree &hearts;
             </button>
 
+            {/* Original button stays in flow but becomes invisible when running */}
             <button
               ref={declineRef}
-              onMouseEnter={runAway}
-              onTouchStart={runAway}
-              onClick={runAway}
-              className="w-full sm:w-auto px-8 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-600 font-semibold rounded-md text-sm cursor-pointer transition-all duration-200"
-              style={
-                declinePos
-                  ? {
-                      position: "fixed",
-                      top: declinePos.top,
-                      left: declinePos.left,
-                      width: "auto",
-                      zIndex: 100,
-                    }
-                  : {}
-              }
+              onMouseEnter={!declinePos ? runAway : undefined}
+              onTouchStart={!declinePos ? runAway : undefined}
+              onClick={!declinePos ? runAway : undefined}
+              className="w-full sm:w-auto px-8 py-2.5 bg-gray-200 text-gray-600 font-semibold rounded-md text-sm cursor-pointer"
+              style={declinePos ? { visibility: "hidden" } : {}}
             >
               Decline
             </button>
           </div>
+
+          {/* Flying copy rendered outside the modal */}
+          {declinePos && (
+            <button
+              onMouseEnter={runAway}
+              onTouchStart={runAway}
+              onClick={runAway}
+              className="px-8 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-600 font-semibold rounded-md text-sm cursor-pointer transition-all duration-200 fixed z-100"
+              style={{ top: declinePos.top, left: declinePos.left }}
+            >
+              Decline
+            </button>
+          )}
 
           <p className="text-[10px] text-gray-400 mt-3 text-center">
             &copy; 2026 Piggie&apos;s Pages. All rights reserved. No piggies were harmed in the making of this agreement.

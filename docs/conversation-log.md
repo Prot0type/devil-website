@@ -153,6 +153,61 @@
 
 ---
 
+## Prompt 9 - AWS Credentials Error
+**User:** Got `AuthenticationError` when running `cdk bootstrap`.
+**Response:** Provided 3 options to configure AWS creds: `aws configure`, env vars, or AWS SSO.
+**Result:** User configured credentials successfully.
+
+---
+
+## Prompt 10 - First Commit & Deploy
+**User:** Confirmed all setup steps done (GitHub environments, OIDC, CDK deploy, secrets). Asked "what's next?"
+**Actions:**
+1. Checked git status — all untracked files
+2. Video file is 94MB — added `public/video/*.mp4` and `.claude/` to `.gitignore`
+3. User chose to commit to `develop` first (not `main`) to trigger dev deploy only
+4. Created `develop` branch, staged all files (no video, no .claude, no node_modules)
+5. Committed: `bcd66c2` — "Initial commit: Piggie's Pages Valentine's website"
+6. Pushed to `origin/develop` — triggers GitHub Actions dev deploy
+
+**Pending manual step:** User needs to upload video directly to S3 video bucket:
+```
+aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
+```
+
+---
+
+## Prompt 11 - CloudFront Invalidation Failure
+**User:** GitHub Actions failed at "Invalidate CloudFront cache" — `NoSuchDistribution`.
+**Response:** Advised to verify the `CLOUDFRONT_DISTRIBUTION_ID` secret matches the CDK output (should be format `E1ABC2DEF3GHIJ`, not a URL).
+**Result:** User fixed the secret and deployment succeeded.
+
+---
+
+## Prompt 12 - Video Broken on CloudFront
+**User:** Site is live at `https://d1215edq0mqyst.cloudfront.net/` but video shows broken link.
+**Cause:** Video file (`DevilKaRR.mp4`, 94MB) is gitignored, so GitHub Actions can't upload it. User must upload manually to the S3 video bucket.
+**Fix:** Run `aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4 --region us-west-2`
+**Note:** File must be at path `video/DevilKaRR.mp4` in the video bucket since CloudFront routes `/video/*` to that bucket.
+
+---
+
+## Prompt 13 - Mobile Layout Shift Fix
+**User:** On mobile, when the Decline button runs away, the Agree button snaps to Decline's old position (layout reflow). This ruins the runaway button game.
+**Cause:** When Decline gets `position: fixed`, it leaves the document flow, so the flex container reflows and Agree moves.
+**Fix (v1):** Added invisible placeholder span — but it was slightly bigger than the button, still caused a minor shift.
+
+---
+
+## Prompt 14 - Refined Layout Shift Fix (no fixed heights)
+**User:** Didn't like the fixed `min-height` approach (v2) — brittle and not clean.
+**Fix (v3 — final):** Two-button approach:
+1. Original Decline button stays in the DOM flow with `visibility: hidden` when running — preserves exact layout.
+2. A separate flying copy button renders at the fixed position outside the modal.
+3. No placeholder, no fixed heights — zero layout reflow.
+
+---
+
 ## Key Decisions
 | # | Decision | Reason |
 |---|----------|--------|
