@@ -201,10 +201,19 @@ aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
 
 ## Prompt 14 - Refined Layout Shift Fix (no fixed heights)
 **User:** Didn't like the fixed `min-height` approach (v2) — brittle and not clean.
-**Fix (v3 — final):** Two-button approach:
-1. Original Decline button stays in the DOM flow with `visibility: hidden` when running — preserves exact layout.
-2. A separate flying copy button renders at the fixed position outside the modal.
-3. No placeholder, no fixed heights — zero layout reflow.
+**Fix (v3):** Two-button approach with `visibility: hidden` on the in-flow button. But this left a visible empty gap.
+
+---
+
+## Prompt 15 - Remove Visible Gap
+**User:** Shared screenshots showing the ugly empty gap where the invisible Decline placeholder sits.
+**Fix (v4):** Just unmount the in-flow Decline button entirely — user asked to revert this.
+
+---
+
+## Prompt 16 - Flying Button Size Mismatch
+**User:** On mobile the flying Decline button is much smaller than the original (which is `w-full`), making it look like the desktop button.
+**Fix (v5 — final):** Capture the original button's exact `width` and `height` via `getBoundingClientRect()` in `runAway`, store in `declinePos` state, and apply as inline styles on the flying copy. Now the flying button is always the same size as the original regardless of viewport.
 
 ---
 

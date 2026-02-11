@@ -5,14 +5,12 @@ import { termsContent } from "./terms-content";
 
 export default function Home() {
   const [agreed, setAgreed] = useState(false);
-  const [declinePos, setDeclinePos] = useState<{ top: string; left: string } | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
+  const [declinePos, setDeclinePos] = useState<{ top: string; left: string; width: number; height: number } | null>(null);
   const declineRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const runAway = useCallback(() => {
     if (!declineRef.current) return;
-    setIsRunning(true);
 
     const btn = declineRef.current.getBoundingClientRect();
     const padding = 16;
@@ -23,9 +21,7 @@ export default function Home() {
     const newX = Math.max(padding, Math.random() * maxX);
     const newY = Math.max(padding, Math.random() * maxY);
 
-    setDeclinePos({ top: `${newY}px`, left: `${newX}px` });
-
-    setTimeout(() => setIsRunning(false), 200);
+    setDeclinePos({ top: `${newY}px`, left: `${newX}px`, width: btn.width, height: btn.height });
   }, []);
 
   // Reset decline position on window resize
@@ -119,8 +115,8 @@ export default function Home() {
               onMouseEnter={runAway}
               onTouchStart={runAway}
               onClick={runAway}
-              className="px-8 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-600 font-semibold rounded-md text-sm cursor-pointer transition-all duration-200 fixed z-100"
-              style={{ top: declinePos.top, left: declinePos.left }}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-600 font-semibold rounded-md text-sm cursor-pointer transition-all duration-200 fixed z-100 flex items-center justify-center"
+              style={{ top: declinePos.top, left: declinePos.left, width: declinePos.width, height: declinePos.height }}
             >
               Decline
             </button>
