@@ -211,6 +211,25 @@ aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
 
 ---
 
+## Prompt 17 - Content Updates from Sarthak's Feedback
+**User:** Sarthak (Devil) reviewed the site and sent corrections. Also clarified that "Devil" is his Steam ID — his girlfriend calls him Sarthak.
+
+**Changes made to `terms-content.ts`:**
+- **All "Piggies" → "Piggie"** (singular) throughout
+- **All "Devil" → "Sarthak"** throughout (including headings)
+- **BETWEEN:** Devil → Sarthak, removed "The One Who Steals the Blanket", "That Guy" → "ME"
+- **AND:** "Professional Snack Stealer" → "Professional Yapper"
+- **Article 2:** Replaced "Five More Minutes" definition with "Travel Time" (travel to epic destinations, good food, cringe couple reels)
+- **Article 3:** Removed lines 2 (compliments), 3 (spider remover), 4 (last snack). Line 6 updated: "And remember that Piggie is the funnier of the two. (Ye jhoot hai)"
+- **Article 4:** Removed line 6 (funniest person). Line 8: removed TikTok, now "random memes and reels"
+- **Article 5:** Removed line 3 (shared show queue)
+- **Removed:** Article 6 (Dispute Resolution) and Article 8 (Miscellaneous Provisions)
+- **Renumbered:** Term & Termination → Article VI, Valentine's Addendum → Article VII
+
+**Other files updated:** `layout.tsx` (metadata description), `page.tsx` ("Dear Piggie")
+
+---
+
 ## Prompt 16 - Flying Button Size Mismatch
 **User:** On mobile the flying Decline button is much smaller than the original (which is `w-full`), making it look like the desktop button.
 **Fix (v5 — final):** Capture the original button's exact `width` and `height` via `getBoundingClientRect()` in `runAway`, store in `declinePos` state, and apply as inline styles on the flying copy. Now the flying button is always the same size as the original regardless of viewport.
