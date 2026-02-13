@@ -2,15 +2,17 @@ import * as cdk from "aws-cdk-lib";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
-import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
-import * as iam from "aws-cdk-lib/aws-iam";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import { Construct } from "constructs";
-import * as path from "path";
 
 export interface StaticSiteStackProps extends cdk.StackProps {
   environment: "dev" | "prod";
-  /** Optional: domain name for prod (e.g. piggiespages.com) */
+  /** Optional: primary domain name (e.g. piggiespages.com or dev.piggiespages.com) */
   domainName?: string;
+  /** Optional: include www.<domainName> as an additional alias */
+  includeWwwAlias?: boolean;
+  /** Optional: ACM certificate ARN in us-east-1 for CloudFront */
+  certificateArn?: string;
 }
 
 export class StaticSiteStack extends cdk.Stack {
@@ -60,6 +62,17 @@ export class StaticSiteStack extends cdk.Stack {
       originPath: "/",
     });
 
+    // Import ACM certificate if provided (must be in us-east-1)
+    const certificate = props.certificateArn
+      ? acm.Certificate.fromCertificateArn(this, "Certificate", props.certificateArn)
+      : undefined;
+    const domainNames = props.domainName
+      ? [
+          props.domainName,
+          ...(props.includeWwwAlias ? [`www.${props.domainName}`] : []),
+        ]
+      : undefined;
+
     const distribution = new cloudfront.Distribution(this, "Distribution", {
       defaultBehavior: {
         origin: siteOrigin,
@@ -76,6 +89,12 @@ export class StaticSiteStack extends cdk.Stack {
         },
       },
       defaultRootObject: "index.html",
+      ...(domainNames && certificate
+        ? {
+            domainNames,
+            certificate,
+          }
+        : {}),
       errorResponses: [
         {
           httpStatus: 403,

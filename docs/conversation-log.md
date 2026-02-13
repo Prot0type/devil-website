@@ -230,6 +230,29 @@ aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
 
 ---
 
+## Prompt 18 - No Hardcoded URLs
+**User:** Asked if any URLs are hardcoded.
+**Response:** No — only relative path `/video/DevilKaRR.mp4` used. Works on any domain.
+
+---
+
+## Prompt 19 - Production Deployment Plan
+**User:** Wants to deploy to prod, buy `piggiespages.com`, add ACM cert.
+
+**Steps outlined:**
+1. Buy domain (Route 53 recommended for easy DNS)
+2. Request ACM cert in **us-east-1** (CloudFront requirement) with `piggiespages.com` + `*.piggiespages.com`
+3. Validate cert via DNS CNAME records, wait for `ISSUED`
+4. Update CDK prod stack to add domain name + cert ARN
+5. `cdk deploy PiggiesPagesProd`
+6. Add Route 53 A/CNAME record pointing domain → CloudFront
+7. Set GitHub secrets for `production` environment
+8. Merge `develop` → `main` to trigger prod deploy
+
+**Waiting on:** User to buy domain and share ACM cert ARN for CDK update.
+
+---
+
 ## Prompt 16 - Flying Button Size Mismatch
 **User:** On mobile the flying Decline button is much smaller than the original (which is `w-full`), making it look like the desktop button.
 **Fix (v5 — final):** Capture the original button's exact `width` and `height` via `getBoundingClientRect()` in `runAway`, store in `declinePos` state, and apply as inline styles on the flying copy. Now the flying button is always the same size as the original regardless of viewport.
@@ -262,3 +285,202 @@ aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
 - [ ] Test on dev environment
 - [ ] Buy domain (piggiespages.com) and add to prod stack
 - [ ] First commit & push
+
+---
+
+## Prompt 20 - Claude Handoff + Logging Instruction
+**User:** Shared Claude's production deployment plan and noted Claude hit its limit mid-change. Asked Codex to read `docs/conversation-log.md` and keep it updated after every prompt.
+
+**Codex actions:**
+1. Read `docs/conversation-log.md` and confirmed full project history/context.
+2. Checked working tree and verified current uncommitted files:
+   - `cdk/bin/app.ts`
+   - `cdk/lib/static-site-stack.ts`
+   - `docs/conversation-log.md`
+3. Confirmed prod domain/certificate changes are currently hardcoded in `cdk/bin/app.ts`.
+4. Agreed to maintain this conversation log on each prompt going forward.
+
+**Current handoff status:**
+- Production deploy plan exists and is ready to execute.
+- Likely next code task from Claude handoff: externalize prod certificate/account settings via environment variables (instead of hardcoding in source).
+
+---
+
+## Prompt 21 - Remove Hardcoded Cert ARN
+**User:** Confirmed domain + cert are ready and asked to remove hardcoded cert ARN from source code.
+
+**Codex actions:**
+1. Updated `cdk/bin/app.ts` to read production domain/certificate from environment variables:
+   - `PROD_DOMAIN_NAME`
+   - `PROD_CERTIFICATE_ARN`
+2. Removed hardcoded values from the `PiggiesPagesProd` stack props.
+3. Added validation to fail fast if only one of the two env vars is set (both must be set together, or both unset).
+4. Ran synth validation:
+   - Command: `npm run synth -- PiggiesPagesDev` (inside `cdk/`)
+   - Result: success
+
+**Result:** Yes, it is possible, and the hardcoded cert ARN has been removed from code.
+
+---
+
+## Prompt 22 - Which GitHub Secrets Are Used
+**User:** Asked whether GitHub Secrets need updates and which secrets the deployment currently references.
+
+**Codex actions:**
+1. Reviewed workflow files:
+   - `.github/workflows/deploy-dev.yml`
+   - `.github/workflows/deploy-prod.yml`
+2. Confirmed both workflows reference the same 4 secrets:
+   - `AWS_ROLE_ARN`
+   - `S3_BUCKET_NAME`
+   - `VIDEO_BUCKET_NAME`
+   - `CLOUDFRONT_DISTRIBUTION_ID`
+3. Confirmed there is no workflow currently running `cdk deploy`.
+4. Confirmed new env vars in `cdk/bin/app.ts` are:
+   - `PROD_DOMAIN_NAME`
+   - `PROD_CERTIFICATE_ARN`
+   These are used for manual CDK deployment (e.g., CloudShell), not by current GitHub Actions workflows.
+
+**Answer summary:** No new GitHub secret is required for the cert/domain unless CDK deployment is moved into GitHub Actions.
+
+---
+
+## Prompt 23 - Source of PROD_* Variables
+**User:** Asked where `PROD_DOMAIN_NAME` and `PROD_CERTIFICATE_ARN` come from.
+
+**Codex clarification:**
+1. They come from runtime environment variables read by Node.js in `cdk/bin/app.ts`:
+   - `process.env.PROD_DOMAIN_NAME` (`cdk/bin/app.ts:6`)
+   - `process.env.PROD_CERTIFICATE_ARN` (`cdk/bin/app.ts:7`)
+2. They are not stored in code and are not currently populated by existing GitHub deploy workflows.
+3. Typical source is the shell session where `cdk deploy` runs (e.g., CloudShell via `export ...` before deploy).
+
+---
+
+## Prompt 24 - Domain/Cert via GitHub Secrets
+**User:** Wants prod on `piggiespages.com`, dev on `dev-piggiespages.com`, and asked if these can come from GitHub secrets since Actions handles deploy.
+
+**Codex clarification:**
+1. Current workflows (`deploy-dev.yml`, `deploy-prod.yml`) do app deployment only:
+   - build static files
+   - sync to S3
+   - CloudFront invalidation
+2. Domain + certificate are infrastructure-level settings used by CDK (`cdk/bin/app.ts`), not by current app deploy workflows.
+3. Yes, these values can be stored in GitHub (environment secrets/variables), but they only take effect if a GitHub workflow runs `cdk deploy` and passes them into the CDK process.
+4. For desired domains, CDK config should support both dev and prod domain/cert inputs:
+   - dev: `dev-piggiespages.com`
+   - prod: `piggiespages.com`
+
+---
+
+## Prompt 25 - Dev Subdomain Correction
+**User:** Corrected the dev hostname to `dev.piggiespages.com` (not `dev-piggiespages.com`).
+
+**Codex update:**
+1. Recorded the corrected dev domain for all upcoming CDK/GitHub config guidance.
+2. Future env config should use:
+   - dev: `dev.piggiespages.com`
+   - prod: `piggiespages.com`
+
+---
+
+## Prompt 26 - Manual Cert + CloudFront Setup (No CDK CI/CD)
+**User:** Said CDK deploy via CI/CD is overkill and asked how to configure certificate and CloudFront after registering the domain.
+
+**Codex guidance summary:**
+1. Keep CDK infra deployment manual (CloudShell) and continue using existing app CI/CD for static file sync + invalidation.
+2. Use an ACM certificate in `us-east-1` (required by CloudFront), validated via Route 53 DNS.
+3. Certificate SANs should cover:
+   - `piggiespages.com`
+   - `www.piggiespages.com`
+   - `dev.piggiespages.com`
+4. Run manual `cdk deploy` from CloudShell with environment variables for domain/cert values.
+5. Create Route 53 alias A records pointing hostnames to the corresponding CloudFront distributions.
+
+---
+
+## Prompt 27 - Cert Already Created
+**User:** Confirmed the ACM certificate has already been created.
+
+**Codex next-step guidance:**
+1. Reuse the existing certificate ARN (no need to create a new cert).
+2. Set `PROD_DOMAIN_NAME` and `PROD_CERTIFICATE_ARN` in CloudShell before running `cdk deploy PiggiesPagesProd`.
+3. After deploy, point Route 53 alias records to the CloudFront distribution.
+4. Keep in mind current CDK code still needs a small update if dev also needs custom domain `dev.piggiespages.com`.
+
+---
+
+## Prompt 28 - Make app.ts Ready for Dev Deploy Too
+**User:** Asked to make `cdk/bin/app.ts` work cleanly for dev deploys as well.
+
+**Codex changes:**
+1. Updated `cdk/bin/app.ts` to support env-driven domain/cert config for both stacks:
+   - `DEV_DOMAIN_NAME` + `DEV_CERTIFICATE_ARN`
+   - `PROD_DOMAIN_NAME` + `PROD_CERTIFICATE_ARN`
+2. Added shared validation per environment prefix so each pair must be set together (or both omitted).
+3. Wired dev stack to use `DEV_*` values and prod stack to use `PROD_*` values.
+4. To support `dev.piggiespages.com` correctly, updated `cdk/lib/static-site-stack.ts`:
+   - added `includeWwwAlias?: boolean`
+   - dev now does not auto-add `www.dev...`
+   - prod still auto-adds `www.piggiespages.com`
+
+**Validation:**
+1. `npm run synth -- PiggiesPagesDev` -> success
+2. `npm run synth -- PiggiesPagesProd` -> success
+3. Synth with temporary env vars confirmed aliases:
+   - dev aliases include only `dev.piggiespages.com`
+   - prod aliases include `piggiespages.com` and `www.piggiespages.com`
+
+---
+
+## Prompt 29 - Post-CDK Deploy Next Steps
+**User:** Asked what to do after running CDK deploy.
+
+**Codex next-step checklist:**
+1. Save CDK outputs for each stack:
+   - `SiteBucketName`
+   - `VideoBucketName`
+   - `DistributionId`
+   - `DistributionURL`
+2. Route 53 DNS:
+   - `dev.piggiespages.com` -> dev CloudFront distribution (A Alias)
+   - `piggiespages.com` -> prod CloudFront distribution (A Alias)
+   - `www.piggiespages.com` -> prod CloudFront distribution (A Alias)
+3. Update GitHub environment secrets from outputs:
+   - `dev` env -> dev bucket/video/distribution values
+   - `production` env -> prod bucket/video/distribution values
+   - keep `AWS_ROLE_ARN` as-is if role already has access
+4. Upload video to both video buckets (or rely on workflow if file is present in repo path used by workflow).
+5. Trigger deployments:
+   - push to `develop` for dev deploy
+   - merge/push to `main` for prod deploy
+6. Verify domains and behavior:
+   - T&C modal renders
+   - video plays
+   - runaway Decline button works on mobile
+
+---
+
+## Prompt 30 - How To Create Route 53 Alias Records
+**User:** Asked how to configure Route 53 alias records for:
+- `dev.piggiespages.com` -> dev CloudFront
+- `piggiespages.com` -> prod CloudFront
+- `www.piggiespages.com` -> prod CloudFront
+
+**Codex guidance provided:**
+1. Use Route 53 hosted zone `piggiespages.com`.
+2. Create `A` (Alias) records pointing to the respective CloudFront distributions.
+3. Optionally create matching `AAAA` (Alias) records for IPv6.
+4. If CloudFront target doesn’t appear in dropdown, choose "Alias to CloudFront distribution", paste distribution domain, and use hosted zone ID `Z2FDTNDATAQYW2`.
+5. Verify with DNS lookup and browser checks after propagation.
+
+---
+
+## Prompt 31 - Route 53 Region Message / CloudFront Not Listed
+**User:** Saw Route 53 message that CloudFront alias records are global and available only in US East (N. Virginia), and said they cannot find the CloudFront distribution in target selection.
+
+**Codex clarification:**
+1. This is expected: CloudFront is global and managed from the `us-east-1` console context.
+2. Ensure record type is `A` (or `AAAA`) with `Alias = ON` in a **public** hosted zone.
+3. In Route 53 target, choose "Alias to CloudFront distribution" and select/paste the CloudFront domain (`dxxxx.cloudfront.net`).
+4. If dropdown listing fails, manual target entry still works (CloudFront hosted zone ID `Z2FDTNDATAQYW2`).
