@@ -69,7 +69,7 @@ export default function Home() {
         {/* Greeting */}
         <div className="px-6 pt-4 pb-2">
           <p className="text-sm text-gray-700 font-serif italic">
-            Dear Piggie,
+            Dear Akshita,
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Please carefully read the following Terms of Endearment before proceeding.
