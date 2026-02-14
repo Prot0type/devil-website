@@ -484,3 +484,26 @@ aws s3 cp public/video/DevilKaRR.mp4 s3://VIDEO-BUCKET-NAME/video/DevilKaRR.mp4
 2. Ensure record type is `A` (or `AAAA`) with `Alias = ON` in a **public** hosted zone.
 3. In Route 53 target, choose "Alias to CloudFront distribution" and select/paste the CloudFront domain (`dxxxx.cloudfront.net`).
 4. If dropdown listing fails, manual target entry still works (CloudFront hosted zone ID `Z2FDTNDATAQYW2`).
+
+---
+
+## Prompt 32 - Prod Domain Returns AccessDenied XML
+**User:** Reported `https://www.piggiespages.com/` returns S3 `AccessDenied` XML, while `https://dev.piggiespages.com/` works.
+
+**Codex diagnostics run:**
+1. DNS checks showed:
+   - apex/www resolve to one CloudFront distribution IP set
+   - dev resolves to a different CloudFront distribution IP set
+2. Header checks:
+   - apex/www: `403`, `Server: AmazonS3`, `X-Cache: Error from cloudfront`
+   - dev: `200`, HTML served correctly
+3. Path checks on prod:
+   - `/index.html` => `403`
+   - `/video/DevilKaRR.mp4` => `200`
+
+**Conclusion:** Prod CloudFront + video origin are working, but prod site origin does not currently have readable site files (especially `index.html`) in the prod site bucket. Most likely prod app sync has not run (or `production` `S3_BUCKET_NAME` secret points to the wrong bucket).
+
+**Fix path provided:**
+1. Verify production GitHub secret `S3_BUCKET_NAME` is the prod `SiteBucketName` output.
+2. Run prod deploy workflow (push/merge to `main`) or manually `aws s3 sync out/ s3://<prod-site-bucket> --delete`.
+3. Invalidate prod CloudFront distribution and retest.

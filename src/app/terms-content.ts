@@ -110,7 +110,7 @@ export const termsContent = `
 </p>
 
 <div class="bg-pink-50 border border-pink-300 rounded-lg p-4 mb-4 text-center">
-  <p class="text-pink-700 font-bold text-base mb-2">&ldquo;I love you, Piggie.&rdquo;</p>
+  <p class="text-pink-700 font-bold text-base mb-2">&ldquo;I love you, Akshita.&rdquo;</p>
   <p class="text-pink-600 text-sm">
     Not just today, but every day. Not just when it&rsquo;s easy, but especially when it&rsquo;s not.
     You make everything better just by being you. Thank you for choosing me, for laughing at my jokes
